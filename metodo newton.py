@@ -1,51 +1,78 @@
-def newton_raphson(f, df, x0, tol, max_iter):
+import numpy as np
+import matplotlib.pyplot as plt
+
+def funcion(x):
+    # Define aquí la función cuya raíz quieres encontrar
+    return x**3 - x - 2
+
+def derivada(x):
+    # Derivada de la función definida arriba
+    return 3*x**2 - 1
+
+def newton_raphson(f, df, x0, tol=1e-6, max_iter=100):
     """
-    Método de Newton-Raphson para encontrar una raíz de la función f.
+    Método de Newton-Raphson para encontrar una raíz de f.
 
     Parámetros:
-    f : función a evaluar.
-    df : derivada de la función.
-    x0 : valor inicial.
-    tol : tolerancia (error permitido).
-    max_iter : número máximo de iteraciones.
+    - f: función
+    - df: derivada de la función
+    - x0: aproximación inicial
+    - tol: tolerancia para la convergencia
+    - max_iter: máximo número de iteraciones
 
     Retorna:
-    La raíz aproximada si converge, o None si no lo hace.
+    - raiz: aproximación de la raíz
+    - iteraciones: número de iteraciones realizadas
+    - aproximaciones: lista con todas las aproximaciones para graficar
     """
+    aproximaciones = [x0]
     x = x0
+
     for i in range(max_iter):
-        dfx = df(x)
-        if dfx == 0:
-            print("Error: Derivada cero en la iteración", i+1)
-            return None
+        f_x = f(x)
+        df_x = df(x)
+        if df_x == 0:
+            print(f"Derivada cero en iteración {i}, no se puede continuar.")
+            break
 
-        x_new = x - f(x) / dfx
-
-        print(f"Iteración {i+1}: x = {x_new}, f(x) = {f(x_new)}")
+        x_new = x - f_x / df_x
+        aproximaciones.append(x_new)
 
         if abs(x_new - x) < tol:
-            print("\nRaíz encontrada con la tolerancia deseada.")
-            return x_new
+            return x_new, i+1, aproximaciones
 
         x = x_new
 
-    print("\nNo se alcanzó la convergencia después del número máximo de iteraciones.")
-    return None
+    print("No se alcanzó la tolerancia en el máximo de iteraciones")
+    return x, max_iter, aproximaciones
 
+# Parámetros iniciales
+x0 = 1.5
+tolerancia = 1e-6
+max_iteraciones = 50
 
-# Ejemplo de uso:
-if __name__ == "__main__":
-    def f(x):
-        return x**3 - x - 2  # Cambiar la función si es necesario
+# Ejecutar método
+raiz, iteraciones, aproximaciones = newton_raphson(funcion, derivada, x0, tol=tolerancia, max_iter=max_iteraciones)
 
-    def df(x):
-        return 3*x**2 - 1  # Derivada de la función
+print(f"Raíz aproximada: {raiz}")
+print(f"Iteraciones: {iteraciones}")
 
-    x0 = 1.5  # Valor inicial
-    tol = 1e-6
-    max_iter = 100
+# Graficar función y aproximaciones
+x_vals = np.linspace(min(aproximaciones)-1, max(aproximaciones)+1, 400)
+y_vals = funcion(x_vals)
 
-    raiz = newton_raphson(f, df, x0, tol, max_iter)
+plt.figure(figsize=(10,6))
+plt.plot(x_vals, y_vals, label='f(x)', color='blue')
+plt.axhline(0, color='black', linewidth=0.5)
 
-    if raiz is not None:
-        print(f"\nRaíz aproximada: {raiz}")
+# Graficar puntos de aproximación
+for i, aprox in enumerate(aproximaciones):
+    plt.plot(aprox, funcion(aprox), 'ro')
+    plt.text(aprox, funcion(aprox), f'  x{i}', fontsize=9, color='red')
+
+plt.title("Método de Newton-Raphson - Aproximación a la raíz")
+plt.xlabel("x")
+plt.ylabel("f(x)")
+plt.legend()
+plt.grid(True)
+plt.show()
