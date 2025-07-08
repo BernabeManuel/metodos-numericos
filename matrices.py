@@ -1,128 +1,131 @@
-def imprimir_matriz(matriz, vector):
-    """
-    Imprime la matriz aumentada del sistema.
-    """
-    print("\nSistema actual:")
-    for i in range(len(matriz)):
-        fila = "\t".join(f"{num:8.4f}" for num in matriz[i])
-        print(f"| {fila} | {vector[i]:8.4f}")
-    print()
+import numpy as np
+import matplotlib.pyplot as plt
 
 
-def gaussiana(matriz, vector):
-    """
-    Resuelve un sistema de ecuaciones lineales usando eliminación Gaussiana.
+class Matriz:
+    def __init__(self, filas, columnas, elementos=None):
+        if elementos:
+            self.matriz = np.array(elementos).reshape(filas, columnas)
+        else:
+            self.matriz = np.zeros((filas, columnas))
 
-    Parámetros:
-    matriz : lista de listas con los coeficientes (matriz cuadrada).
-    vector : lista con los términos independientes.
+    def __str__(self):
+        return str(self.matriz)
 
-    Retorna:
-    lista con la solución o None si hay error.
-    """
-    n = len(matriz)
+    def mostrar(self, titulo="Matriz"):
+        print(f"\n{titulo}:\n{self.matriz}")
 
-    for k in range(n):
-        # Buscar el pivote (mayor valor absoluto en columna k para evitar errores numéricos)
-        max_index = k
-        max_value = abs(matriz[k][k])
-        for i in range(k+1, n):
-            if abs(matriz[i][k]) > max_value:
-                max_value = abs(matriz[i][k])
-                max_index = i
-        if max_value == 0:
-            print("Error: Matriz singular o sistema sin solución única.")
-            return None
-        # Intercambiar filas si es necesario
-        if max_index != k:
-            matriz[k], matriz[max_index] = matriz[max_index], matriz[k]
-            vector[k], vector[max_index] = vector[max_index], vector[k]
-            print(f"Se intercambiaron las filas {k} y {max_index} para mejorar el pivote.")
-            imprimir_matriz(matriz, vector)
+    def graficar(self, titulo="Matriz", cmap='viridis'):
+        plt.imshow(self.matriz, cmap=cmap, interpolation='nearest')
+        plt.colorbar()
+        plt.title(titulo)
+        plt.show()
 
-        # Eliminar variables
-        for i in range(k+1, n):
-            factor = matriz[i][k] / matriz[k][k]
-            for j in range(k, n):
-                matriz[i][j] -= factor * matriz[k][j]
-            vector[i] -= factor * vector[k]
+    def suma(self, otra):
+        return Matriz(*self.matriz.shape, elementos=np.add(self.matriz, otra.matriz))
 
-        imprimir_matriz(matriz, vector)
+    def resta(self, otra):
+        return Matriz(*self.matriz.shape, elementos=np.subtract(self.matriz, otra.matriz))
 
-    # Sustitución hacia atrás
-    solucion = [0 for _ in range(n)]
-    for i in range(n-1, -1, -1):
-        suma = 0
-        for j in range(i+1, n):
-            suma += matriz[i][j] * solucion[j]
-        if matriz[i][i] == 0:
-            print("Error: División por cero durante la sustitución.")
-            return None
-        solucion[i] = (vector[i] - suma) / matriz[i][i]
-
-    return solucion
-
-
-def leer_sistema():
-    """
-    Solicita al usuario ingresar el sistema de ecuaciones.
-    """
-    while True:
+    def multiplicacion(self, otra):
         try:
-            n = int(input("¿Cuántas incógnitas tiene el sistema? "))
-            if n <= 0:
-                print("El número de incógnitas debe ser positivo.\n")
-                continue
+            resultado = np.matmul(self.matriz, otra.matriz)
+            return Matriz(resultado.shape[0], resultado.shape[1], elementos=resultado)
+        except ValueError as e:
+            print(f"Error en multiplicación: {e}")
+            return None
+
+    def transpuesta(self):
+        return Matriz(*self.matriz.T.shape, elementos=self.matriz.T)
+
+    def determinante(self):
+        if self.matriz.shape[0] == self.matriz.shape[1]:
+            return np.linalg.det(self.matriz)
+        else:
+            print("Determinante solo definido para matrices cuadradas.")
+            return None
+
+    def inversa(self):
+        try:
+            inv = np.linalg.inv(self.matriz)
+            return Matriz(*inv.shape, elementos=inv)
+        except np.linalg.LinAlgError:
+            print("La matriz no es invertible.")
+            return None
+
+
+# === Menú simple ===
+def menu():
+    print("=== Calculadora de Matrices ===\n")
+    while True:
+        print("\nOpciones:")
+        print("1. Crear dos matrices")
+        print("2. Sumar matrices")
+        print("3. Restar matrices")
+        print("4. Multiplicar matrices")
+        print("5. Mostrar transpuesta")
+        print("6. Determinante")
+        print("7. Inversa")
+        print("8. Salir")
+
+        opcion = input("Seleccione una opción: ")
+
+        if opcion == "8":
             break
-        except ValueError:
-            print("Entrada inválida, por favor ingresa un número entero positivo.\n")
 
-    matriz = []
-    vector = []
+        elif opcion == "1":
+            filas = int(input("Filas: "))
+            columnas = int(input("Columnas: "))
+            print(f"\nIngrese los {filas * columnas} elementos de la Matriz A (separados por espacio):")
+            elem_a = list(map(float, input().split()))
+            A = Matriz(filas, columnas, elem_a)
+            A.mostrar("Matriz A")
+            A.graficar("Matriz A")
 
-    print("Introduce los coeficientes de la matriz y los términos independientes:")
+            print(f"\nIngrese los {filas * columnas} elementos de la Matriz B:")
+            elem_b = list(map(float, input().split()))
+            B = Matriz(filas, columnas, elem_b)
+            B.mostrar("Matriz B")
+            B.graficar("Matriz B")
 
-    for i in range(n):
-        fila = []
-        for j in range(n):
-            while True:
-                try:
-                    val = float(input(f"Coeficiente a[{i+1}][{j+1}]: "))
-                    fila.append(val)
-                    break
-                except ValueError:
-                    print("Valor inválido, intenta de nuevo.")
+        elif not 'A' in locals() or not 'B' in locals():
+            print("Primero debes crear las matrices.")
 
-        matriz.append(fila)
+        elif opcion == "2":
+            C = A.suma(B)
+            C.mostrar("Suma A + B")
+            C.graficar("Suma A + B")
 
-        while True:
-            try:
-                val = float(input(f"Término independiente b[{i+1}]: "))
-                vector.append(val)
-                break
-            except ValueError:
-                print("Valor inválido, intenta de nuevo.")
+        elif opcion == "3":
+            D = A.resta(B)
+            D.mostrar("Resta A - B")
+            D.graficar("Resta A - B")
 
-    return matriz, vector
+        elif opcion == "4":
+            E = A.multiplicacion(B)
+            if E:
+                E.mostrar("Multiplicación A * B")
+                E.graficar("Multiplicación A * B")
 
+        elif opcion == "5":
+            T = A.transpuesta()
+            T.mostrar("Transpuesta de A")
+            T.graficar("Transpuesta de A")
 
-def main():
-    print("Resolución de sistemas de ecuaciones lineales por Eliminación Gaussiana\n")
+        elif opcion == "6":
+            det = A.determinante()
+            if det is not None:
+                print(f"Determinante de A: {det:.4f}")
 
-    matriz, vector = leer_sistema()
+        elif opcion == "7":
+            inv = A.inversa()
+            if inv:
+                inv.mostrar("Inversa de A")
+                inv.graficar("Inversa de A")
 
-    print("\nSistema inicial:")
-    imprimir_matriz(matriz, vector)
-
-    solucion = gaussiana(matriz, vector)
-
-    if solucion is not None:
-        print("\nSolución del sistema:")
-        for i, val in enumerate(solucion, 1):
-            print(f"x{i} = {val:.6f}")
-    else:
-        print("\nNo se pudo encontrar una solución única para el sistema.")
+        else:
+            print("Opción no válida.")
 
 
 if __name__ == "__main__":
-    main()
+    menu()
