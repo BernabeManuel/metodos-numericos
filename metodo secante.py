@@ -1,49 +1,77 @@
-def secante(f, x0, x1, tol, max_iter):
+import numpy as np
+import matplotlib.pyplot as plt
+
+def funcion(x):
+    # Define aquí la función de la cual queremos encontrar la raíz
+    return x**3 - x - 2
+
+def secante(f, x0, x1, tol=1e-6, max_iter=100):
     """
-    Método de la secante para encontrar una raíz de la función f.
+    Método de la secante para encontrar una raíz de f.
 
     Parámetros:
-    f : función a evaluar.
-    x0 : primer valor inicial.
-    x1 : segundo valor inicial.
-    tol : tolerancia (error permitido).
-    max_iter : número máximo de iteraciones.
+    - f: función para la que se busca la raíz
+    - x0, x1: aproximaciones iniciales
+    - tol: tolerancia para el error
+    - max_iter: número máximo de iteraciones permitidas
 
     Retorna:
-    La raíz aproximada si converge, o None si no lo hace.
+    - raiz: aproximación de la raíz
+    - iteraciones: número de iteraciones realizadas
+    - aproximaciones: lista con todas las aproximaciones para graficar
     """
+    aproximaciones = [x0, x1]
+
     for i in range(max_iter):
-        denominador = f(x1) - f(x0)
-        if denominador == 0:
-            print("Error: División por cero en la iteración", i+1)
-            return None
+        f_x0 = f(x0)
+        f_x1 = f(x1)
+        if f_x1 - f_x0 == 0:
+            print("Error: división entre cero en la iteración", i)
+            break
 
-        x2 = x1 - f(x1) * (x1 - x0) / denominador
+        # Fórmula del método de la secante
+        x2 = x1 - f_x1 * (x1 - x0) / (f_x1 - f_x0)
 
-        print(f"Iteración {i+1}: x = {x2}, f(x) = {f(x2)}")
+        aproximaciones.append(x2)
 
+        # Verificamos si la diferencia entre aproximaciones es menor a la tolerancia
         if abs(x2 - x1) < tol:
-            print("\nRaíz encontrada con la tolerancia deseada.")
-            return x2
+            return x2, i+1, aproximaciones
 
+        # Actualizamos variables para la siguiente iteración
         x0, x1 = x1, x2
 
-    print("\nNo se alcanzó la convergencia después del número máximo de iteraciones.")
-    return None
+    print("No se alcanzó la tolerancia deseada en el número máximo de iteraciones")
+    return x2, max_iter, aproximaciones
 
+# Parámetros iniciales
+x0 = 1
+x1 = 2
+tolerancia = 1e-6
+max_iteraciones = 50
 
-# Ejemplo de uso:
-if __name__ == "__main__":
-    def f(x):
-        return x**3 - x - 2  # Cambiar esta función si es necesario
+# Ejecutar método
+raiz, iteraciones, aproximaciones = secante(funcion, x0, x1, tol=tolerancia, max_iter=max_iteraciones)
 
-    # Valores iniciales
-    x0 = 1.0
-    x1 = 2.0
-    tol = 1e-6
-    max_iter = 100
+print(f"Raíz aproximada: {raiz}")
+print(f"Iteraciones: {iteraciones}")
 
-    raiz = secante(f, x0, x1, tol, max_iter)
+# Graficar la función y las aproximaciones
+x_vals = np.linspace(min(aproximaciones)-1, max(aproximaciones)+1, 400)
+y_vals = funcion(x_vals)
 
-    if raiz is not None:
-        print(f"\nRaíz aproximada: {raiz}")
+plt.figure(figsize=(10,6))
+plt.plot(x_vals, y_vals, label="f(x)", color="blue")
+plt.axhline(0, color='black', linewidth=0.5)  # línea y=0
+
+# Graficar puntos de aproximación en la gráfica de f(x)
+for i, aprox in enumerate(aproximaciones):
+    plt.plot(aprox, funcion(aprox), 'ro')  # punto rojo
+    plt.text(aprox, funcion(aprox), f"  x{i}", fontsize=9, color='red')
+
+plt.title("Método de la Secante - Aproximación a la raíz")
+plt.xlabel("x")
+plt.ylabel("f(x)")
+plt.legend()
+plt.grid(True)
+plt.show()
